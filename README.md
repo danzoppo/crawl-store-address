@@ -1,2 +1,2 @@
 # crawl-store-address
-Example of crawling a store's locations on their website and downloading the address for each location.
+An example of using Go Colly to webcrawl the CVS Pharmacy's website to acquire the addresses of all stores in the US. This data can then be used in a GIS analysis.
