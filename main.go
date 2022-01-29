@@ -1,4 +1,5 @@
-// Package main obtains addresses of all CVS stores across the USA.
+// Package main scrapes the addresses for every CVS Pharmacy
+// from the CVS Pharmacy website.
 package main
 
 import (
@@ -13,14 +14,14 @@ import (
 	"github.com/gocolly/colly/v2"
 )
 
-// storeStatesUrl is the URL to the different CVS state store pages.
+// baseSearchURL is the URL to the different CVS state store pages.
 const baseSearchURL = "https://www.cvs.com/store-locator/cvs-pharmacy-locations"
 
 func main() {
-	// Get today's date as store locations with change over time
+	// Get today's date as store locations with change over time.
 	today := date.Today().String()
 
-	// Setup csv file to store addresses
+	// Setup csv file for data storage.
 	fName := "cvs-store-locations-" + today + ".csv"
 	file, err := os.Create(fName)
 	if err != nil {
@@ -29,15 +30,15 @@ func main() {
 	}
 	defer file.Close()
 
-	// Initialize writer and memory flush
+	// Initialize writer and flush memory.
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
-	// Set headers
+	// Set header.
 	writer.Write([]string{"address"})
 
 	// Instantiate collector. This collector will visit each of the state
-	// webpages to find the stores in each state.
+	// and town webpages to find the stores in each state.
 	c := colly.NewCollector(
 		// Set allowed domains:
 		colly.AllowedDomains("cvs.com", "www.cvs.com"),
@@ -50,47 +51,28 @@ func main() {
 		RandomDelay: 1 * time.Second,
 	})
 
-	// Clone collector to scrape that addresses.
-	cityCollector := c.Clone()
-	storeCollector := c.Clone()
-
-	// Visit each of the states
+	// Identity state and town html elements and visit links.
 	c.OnHTML("div.states li", func(e *colly.HTMLElement) {
+
 		link := e.ChildAttr("a[href]", "href")
 		link = e.Request.AbsoluteURL(link)
-		// Start visiting each city within a state
-		cityCollector.Visit(link)
+		c.Visit(link)
 	})
 
-	// Notify the weblink for each state
+	// Print URL to track scraping.
 	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting State:", r.URL.String())
+		fmt.Println("Visiting:", r.URL.String())
 	})
 
-	// Create a collector to acquire the store addresses.
-	cityCollector.OnHTML("div.states li", func(e *colly.HTMLElement) {
-		link := e.ChildAttr("a[href]", "href")
-		link = e.Request.AbsoluteURL(link)
-		storeCollector.Visit(link)
-	})
-
-	// Notify with the weblink for each city/town visited.
-	cityCollector.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting town:", r.URL.String())
-	})
-
-	// Obtain store address
-	storeCollector.OnHTML("p.store-address", func(e *colly.HTMLElement) {
+	// Obtain store address and write to csv file. Print
+	// address to console to track scraping.
+	c.OnHTML("p.store-address", func(e *colly.HTMLElement) {
 		address := strings.TrimSpace(e.Text)
-
-		// Print to console to follow progress
 		fmt.Println(address)
-		// Write address to csv file
 		writer.Write([]string{address})
 	})
 
 	// Commence searching from the base URL.
-	startPage := c.Visit(baseSearchURL)
-	// Check for errors
-	fmt.Println(startPage)
+	err = c.Visit(baseSearchURL)
+	log.Fatal(err)
 }
