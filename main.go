@@ -53,7 +53,6 @@ func main() {
 
 	// Identity state and town html elements and visit links.
 	c.OnHTML("div.states li", func(e *colly.HTMLElement) {
-
 		link := e.ChildAttr("a[href]", "href")
 		link = e.Request.AbsoluteURL(link)
 		c.Visit(link)
