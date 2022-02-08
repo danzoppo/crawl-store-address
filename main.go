@@ -22,7 +22,7 @@ func main() {
 	today := date.Today().String()
 
 	// Setup csv file for data storage.
-	fName := "cvs-store-locations-" + today + ".csv"
+	fName := today + "_" + "cvs-store-locations" + ".csv"
 	file, err := os.Create(fName)
 	if err != nil {
 		log.Fatalf("Cannot create file %q: %s\n", fName, err)
@@ -37,8 +37,8 @@ func main() {
 	// Set header.
 	writer.Write([]string{"address"})
 
-	// Instantiate collector. This collector will visit each of the state
-	// and town webpages to find the stores in each state.
+	// Instantiate the collector. This collector will visit each of the state
+	// and town webpages to find the addresses.
 	c := colly.NewCollector(
 		// Set allowed domains:
 		colly.AllowedDomains("cvs.com", "www.cvs.com"),
